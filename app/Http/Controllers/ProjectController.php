@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Http\Requests\UpdateProjectRequest;
+
+
+
 
 class ProjectController extends Controller
 {
@@ -33,10 +37,34 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProjectRequest $request)
+    public function store(Request $request)
     {
-        //
+        // Validate the request data
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'required|date',
+            'image_path' => 'required|url',
+        ]);
+
+        // Create a new project
+        $project = new Project([
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+            'type' => $request->input('type'),
+            'due_date' => $request->input('due_date'),
+            'status' => 'Available',
+            'image_path' => $request->input('image_path'),
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
+        $project->save();
+
+        // Redirect back to the reservation page with a success message
+        return redirect()->route('reservations.index')->with('success', 'Room added successfully.');
     }
+
+
 
     /**
      * Display the specified resource.

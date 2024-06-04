@@ -3,7 +3,6 @@ import axios from 'axios';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from '@inertiajs/react';
 
-
 export default function Index({ auth, projects }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
@@ -13,9 +12,12 @@ export default function Index({ auth, projects }) {
         start_datetime: '',
         end_datetime: '',
     });
+    const [newRoomName, setNewRoomName] = useState('');
+    const [newRoomType, setNewRoomType] = useState('');
     const [isSuccessMessageVisible, setIsSuccessMessageVisible] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [projectList, setProjectList] = useState([]);
+    const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
 
     useEffect(() => {
         const formattedProjects = projects.data.map(project => ({
@@ -65,6 +67,13 @@ export default function Index({ auth, projects }) {
             start_datetime: '',
             end_datetime: '',
         });
+        setErrorMessage('');
+    };
+
+    const closeRoomModal = () => {
+        setIsRoomModalOpen(false);
+        setNewRoomName('');
+        setNewRoomType('');
         setErrorMessage('');
     };
 
@@ -123,6 +132,39 @@ export default function Index({ auth, projects }) {
         }
     };
 
+    const handleAddRoomClick = () => {
+        setIsRoomModalOpen(true);
+    };
+
+    const handleRoomSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!newRoomName || !newRoomType) {
+            setErrorMessage('All fields are required.');
+            return;
+        }
+
+        try {
+            const response = await axios.post(`/rooms`, { name: newRoomName, type: newRoomType });
+            if (response.status === 200) {
+                setProjectList([...projectList, response.data.room]);
+                setIsRoomModalOpen(false);
+                setIsSuccessMessageVisible(true);
+                setTimeout(() => setIsSuccessMessageVisible(false), 3000);
+            } else {
+                setErrorMessage('Failed to add the new room.');
+            }
+        } catch (error) {
+            if (error.response && error.response.data) {
+                console.error('Server Error:', error.response.data);
+                setErrorMessage(error.response.data.message || 'Failed to add the new room.');
+            } else {
+                console.error('Error:', error.message);
+                setErrorMessage('Failed to add the new room.');
+            }
+        }
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -150,11 +192,11 @@ export default function Index({ auth, projects }) {
                                         <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700" key={project.id}>
                                             <td className="px-3 py-2">{project.id}</td>
                                             <td className="px-3 py-2">
-                                                {project.status === 'Available' ? (
-                                                    <img src={project.image_path} style={{ width: 60 }} alt={project.name} />
-                                                ) : (
-                                                    <img src={project.image_reserved} style={{ width: 60 }} alt={project.name} />
-                                                )}
+                                                <img
+                                                    src={project.status === 'Available' ? 'https://htmlcolorcodes.com/assets/images/colors/green-color-solid-background-1920x1080.png' : 'https://htmlcolorcodes.com/assets/images/colors/dark-red-color-solid-background-1920x1080.png'}
+                                                    style={{ width: 60 }}
+                                                    alt={project.name}  
+                                                />
                                             </td>
                                             <td className="px-3 py-2">{project.name}</td>
                                             <td className="px-3 py-2">{project.status}</td>
@@ -183,72 +225,125 @@ export default function Index({ auth, projects }) {
                                     ))}
                                 </tbody>
                             </table>
+                            <button
+                                onClick={handleAddRoomClick}
+                                className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+                            >
+                                Add Room
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
             {isModalOpen && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-                        <h2 className="text-xl font-semibold mb-4">Reserve Room for {selectedProject && selectedProject.name}</h2>
-                        {errorMessage && (
-                            <div className="mb-4 text-red-500">
-                                {errorMessage}
-                            </div>
-                        )}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96">
+                        <h2 className="text-xl font-semibold mb-4">Reserve Room</h2>
+                        {errorMessage && <div className="mb-4 text-red-500">{errorMessage}</div>}
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
-                                <label className="block text-gray-700 dark:text-gray-300">Name</label>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Name</label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={reservationDetails.name}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 dark:text-gray-300">Email</label>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={reservationDetails.email}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 dark:text-gray-300">Start Date and Time</label>
+                                <label htmlFor="start_datetime" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Start Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     name="start_datetime"
                                     value={reservationDetails.start_datetime}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-gray-700 dark:text-gray-300">End Date and Time</label>
+                                <label htmlFor="end_datetime" className="block text-sm font-medium text-gray-700 dark:text-gray-200">End Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     name="end_datetime"
                                     value={reservationDetails.end_datetime}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>
                             <div className="flex justify-end">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 mr-2 bg-gray-500 text-white rounded">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">Reserve</button>
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-4 py-2 mr-2 bg-gray-500 text-white rounded"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                                >
+                                    Reserve
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-            {isSuccessMessageVisible && (
-                <div className="fixed inset-0 flex items-center justify-center">
-                    <div className="bg-green-500 text-white p-4 rounded">
-                        Action Successful!
+
+            {isRoomModalOpen && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96">
+                        <h2 className="text-xl font-semibold mb-4">Add New Room</h2>
+                        {errorMessage && <div className="mb-4 text-red-500">{errorMessage}</div>}
+                        <form onSubmit={handleRoomSubmit}>
+                            <div className="mb-4">
+                                <label htmlFor="newRoomName" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Room Name</label>
+                                <input
+                                    type="text"
+                                    name="newRoomName"
+                                    value={newRoomName}
+                                    onChange={(e) => setNewRoomName(e.target.value)}
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label htmlFor="newRoomType" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Room Type</label>
+                                <input
+                                    type="text"
+                                    name="newRoomType"
+                                    value={newRoomType}
+                                    onChange={(e) => setNewRoomType(e.target.value)}
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                />
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={closeRoomModal}
+                                    className="px-4 py-2 mr-2 bg-gray-500 text-white rounded"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                                >
+                                    Add Room
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

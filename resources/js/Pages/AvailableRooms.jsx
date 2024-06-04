@@ -25,10 +25,10 @@ const AvailableRooms = ({ auth, availableRooms }) => {
                                         <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700" key={room.id}>
                                             <td className="px-3 py-2">{room.id}</td>
                                             <td className="px-3 py-2">
-                                                <img src={room.image_path} style={{ width: 60 }} alt={room.name} />
+                                                <img src={'https://htmlcolorcodes.com/assets/images/colors/green-color-solid-background-1920x1080.png'} style={{ width: 60 }} alt={room.name} />
                                             </td>
                                             <td className="px-3 py-2">{room.name}</td>
-                                            <td className="px-3 py-2">{room.description}</td>
+                                            <td className="px-3 py-2">{room.type}</td>
                                         </tr>
                                     ))}
                                 </tbody>

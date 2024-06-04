@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AvailableRoomController;
 use App\Http\Controllers\ReservedRoomController;
+use App\Http\Controllers\RoomController;
 
 
 Route::redirect('/', '/dashboard');
@@ -44,6 +45,13 @@ Route::get('/available-rooms', [AvailableRoomController::class, 'index']);
 Route::get('/AvailableRooms', [AvailableRoomController::class, 'index'])->name('availableRooms.index');
 
 Route::get('/ReservedRooms', [ReservedRoomController::class, 'index'])->name('reservedRooms.index');
+
+
+
+Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+
+Route::post('/rooms', [RoomController::class, 'store']);
+
 
 
 
